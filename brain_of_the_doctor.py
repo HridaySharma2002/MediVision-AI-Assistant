@@ -1,3 +1,4 @@
+#MediVision AI Assistant - Core Medical AI Engine
 #Step1: Setup GROQ API key
 import os
 
