@@ -1,13 +1,13 @@
-🧠🗣️ AI Doctor with Vision and Voice
-An interactive AI assistant that simulates a doctor by analyzing patient images and spoken symptoms using cutting-edge language and multimodal models. This project combines computer vision, speech recognition, and text-to-speech to deliver concise and natural medical feedback.
+🧠🗣️ MediVision AI Assistant
+An interactive AI assistant that simulates a doctor by analyzing patient images and spoken symptoms using cutting-edge language and multimodal models. This project combines computer vision, speech recognition, and large language models for comprehensive medical analysis.
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/yourusername/ai-doctor-voice-and-vision/actions)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/yourusername/MediVision-AI-Assistant/actions)
 [![License](https://img.shields.io/badge/license-MIT-blue)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.0.0-orange)](https://github.com/yourusername/ai-doctor-voice-and-vision/releases)
+[![Version](https://img.shields.io/badge/version-1.0.0-orange)](https://github.com/yourusername/MediVision-AI-Assistant/releases)
 
 ✨ Features
 - **Image Diagnosis**: Upload an image (e.g., a skin condition), and the AI provides a potential diagnosis.
-- **Speech-to-Text**: Describe your symptoms via microphone; they’ll be transcribed using Whisper.
+- **Speech-to-Text**: Describe your symptoms via microphone; they'll be transcribed using Whisper.
 - **AI Doctor Response**: The system processes your speech and image, then returns a diagnosis and recommendations.
 - **Voice Feedback**: The AI doctor replies using realistic speech powered by ElevenLabs or GTTS.
 
@@ -21,8 +21,8 @@ An interactive AI assistant that simulates a doctor by analyzing patient images 
 🚀 Getting Started
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/yourusername/ai-doctor-voice-and-vision.git
-   cd ai-doctor-voice-and-vision
+   git clone https://github.com/yourusername/MediVision-AI-Assistant.git
+   cd MediVision-AI-Assistant
    ```
 2. **Set Up Environment**
    **Option A**: Using pipenv (recommended)
