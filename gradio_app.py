@@ -1,4 +1,4 @@
-#VoiceBot UI with Gradio
+#MediVision AI Assistant - Voice and Vision UI with Gradio
 import os
 import gradio as gr
 
@@ -54,8 +54,7 @@ iface = gr.Interface(
         gr.Textbox(label="Doctor's Response"),
         gr.Audio(label="Doctor's Response Audio")
     ],
-    title="AI Doctor with Vision and Voice"
+    title="MediVision AI Assistant - Voice and Vision Analysis"
 )
 
 iface.launch(debug=True)
-
