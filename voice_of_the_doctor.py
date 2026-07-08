@@ -1,3 +1,4 @@
+#MediVision AI Assistant - Voice Synthesis Module
 #Step1a: Setup Text to Speech–TTS–model with gTTS
 import os
 from gtts import gTTS
