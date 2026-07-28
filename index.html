@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediVision AI Assistant - Clinical Vision & Voice Diagnostics</title>
+    <meta name="description" content="Next-generation AI medical assistant combining multimodal vision analysis and natural voice synthesis for clinical diagnostics.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dark-theme">
+    <!-- Background Animated Gradient & Grid -->
+    <div class="bg-glow"></div>
+    <div class="bg-grid"></div>
+
+    <!-- App Container -->
+    <div class="app-wrapper">
+        
+        <!-- Header / Navigation -->
+        <header class="app-header">
+            <div class="header-brand">
+                <div class="brand-logo">
+                    <i class="fa-solid fa-staff-snake"></i>
+                    <span class="logo-pulse"></span>
+                </div>
+                <div class="brand-info">
+                    <h1>MediVision <span class="badge-v2">AI v2.0</span></h1>
+                    <p class="brand-tagline">Clinical Multimodal Diagnostic Platform</p>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <div class="api-status-pill" id="apiStatusPill">
+                    <span class="status-dot online"></span>
+                    <span class="status-text" id="statusText">System Ready</span>
+                </div>
+
+                <button class="btn-icon" id="themeToggleBtn" title="Toggle Theme" aria-label="Toggle Theme">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+
+                <button class="btn-secondary" id="configBtn">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>Settings</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Settings Modal -->
+        <div class="modal-overlay hidden" id="settingsModal">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h3><i class="fa-solid fa-gear"></i> Platform Configuration</h3>
+                    <button class="btn-close" id="closeSettingsBtn"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="apiEndpointInput">REST API Endpoint URL</label>
+                        <input type="text" id="apiEndpointInput" placeholder="http://localhost:8000 (or https://your-backend.onrender.com)" value="http://localhost:8000">
+                        <small>Leaves empty to run in standalone Demo Mode directly in browser.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ttsEngineSelect">Text-To-Speech Engine</label>
+                        <select id="ttsEngineSelect">
+                            <option value="elevenlabs">ElevenLabs Turbo v2 (High Fidelity)</option>
+                            <option value="gtts">gTTS / Web Speech (Fallback)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mongoDbStatus">Database Connection</label>
+                        <div class="db-status-badge">
+                            <i class="fa-solid fa-database"></i>
+                            <span id="dbStatusLabel">MongoDB Atlas Connected (Cluster0)</span>
+                        </div>
+                    </div>
+
+                    <div class="toggle-group">
+                        <label for="autoPlayToggle">Autoplay Doctor Response Audio</label>
+                        <input type="checkbox" id="autoPlayToggle" checked>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-primary" id="saveSettingsBtn">Save & Apply</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Workspace -->
+        <main class="workspace">
+            
+            <!-- Left Column: Input Workbench -->
+            <section class="workbench-panel">
+                
+                <!-- Preset Sample Selector -->
+                <div class="panel-section sample-section">
+                    <div class="section-title">
+                        <i class="fa-solid fa-vial"></i>
+                        <h2>Sample Clinical Cases</h2>
+                    </div>
+                    <div class="sample-cards">
+                        <button class="sample-card active" data-sample="acne">
+                            <img src="acne.jpg" alt="Acne Case">
+                            <div class="sample-meta">
+                                <h3>Facial Dermatosis</h3>
+                                <span>Acne Vulneris</span>
+                            </div>
+                        </button>
+
+                        <button class="sample-card" data-sample="dandruff">
+                            <img src="dandruff-optimized.webp" alt="Scalp Case">
+                            <div class="sample-meta">
+                                <h3>Scalp Condition</h3>
+                                <span>Seborrheic Dermatitis</span>
+                            </div>
+                        </button>
+
+                        <button class="sample-card" data-sample="rash">
+                            <img src="skin_rash.jpg" alt="Skin Rash Case">
+                            <div class="sample-meta">
+                                <h3>Erythema Rash</h3>
+                                <span>Acute Dermatitis</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Multimodal Input Grid -->
+                <div class="input-grid">
+                    
+                    <!-- Image Upload Dropzone -->
+                    <div class="input-card image-card">
+                        <div class="card-header">
+                            <span class="step-num">01</span>
+                            <div class="card-title">
+                                <h3>Medical Image Input</h3>
+                                <p>Upload high-resolution lesion or clinical photo</p>
+                            </div>
+                        </div>
+
+                        <div class="dropzone" id="imageDropzone">
+                            <input type="file" id="imageFileInput" accept="image/*" class="file-input">
+                            <div class="dropzone-content" id="dropzoneContent">
+                                <div class="upload-icon">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                                </div>
+                                <p class="dropzone-text">Drag & drop lesion image here or <span>browse files</span></p>
+                                <span class="file-limits">Supports JPG, PNG, WEBP (Max 10MB)</span>
+                            </div>
+
+                            <div class="image-preview-container hidden" id="previewContainer">
+                                <img id="imagePreview" src="" alt="Selected Clinical Image">
+                                <div class="scan-overlay"></div>
+                                <button class="btn-remove-image" id="removeImageBtn" title="Remove Image">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Voice Recorder Card -->
+                    <div class="input-card voice-card">
+                        <div class="card-header">
+                            <span class="step-num">02</span>
+                            <div class="card-title">
+                                <h3>Patient Voice & Symptoms</h3>
+                                <p>Record symptoms audio or enter clinical notes</p>
+                            </div>
+                        </div>
+
+                        <!-- Voice Recorder Interface -->
+                        <div class="recorder-widget">
+                            <div class="visualizer-box">
+                                <canvas id="audioVisualizer"></canvas>
+                                <div class="rec-timer" id="recTimer">00:00</div>
+                            </div>
+
+                            <div class="recorder-controls">
+                                <button class="btn-record" id="recordBtn" title="Start Recording">
+                                    <i class="fa-solid fa-microphone"></i>
+                                </button>
+                                <span class="recorder-hint" id="recordHint">Click to start recording symptoms</span>
+                            </div>
+
+                            <div class="audio-playback-preview hidden" id="patientAudioPreview">
+                                <audio id="patientAudioPlayer" controls></audio>
+                                <button class="btn-clear-audio" id="clearAudioBtn"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="divider"><span>OR MANUAL TEXT</span></div>
+
+                        <div class="text-symptom-box">
+                            <textarea id="symptomsTextInput" placeholder="Type symptoms or patient query directly... (e.g. 'I have had this red itchy rash on my cheek for 3 days')"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Diagnostics Action -->
+                <div class="action-bar">
+                    <button class="btn-launch-diagnosis" id="analyzeBtn">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>Generate AI Clinical Diagnosis</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Right Column: Diagnostic Intelligence Center -->
+            <section class="results-panel">
+                
+                <!-- Doctor Response Card -->
+                <div class="card result-card">
+                    <div class="result-header">
+                        <div class="doctor-profile">
+                            <div class="avatar-box">
+                                <i class="fa-solid fa-user-doctor"></i>
+                                <span class="ai-pulse"></span>
+                            </div>
+                            <div>
+                                <h3>Dr. MediVision AI</h3>
+                                <p>Multimodal Clinical Diagnostic Engine</p>
+                            </div>
+                        </div>
+
+                        <div class="analysis-status" id="analysisStatusBadge">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>Ready</span>
+                        </div>
+                    </div>
+
+                    <!-- Loader State -->
+                    <div class="diagnosis-loader hidden" id="diagnosisLoader">
+                        <div class="dna-spinner"></div>
+                        <p class="loader-text" id="loaderStatusText">Analyzing medical image features & transcribing audio symptoms...</p>
+                        <div class="progress-bar-wrap">
+                            <div class="progress-bar-fill" id="progressBarFill"></div>
+                        </div>
+                    </div>
+
+                    <!-- Output Content -->
+                    <div class="result-body" id="resultBody">
+                        
+                        <!-- Transcribed Speech Section -->
+                        <div class="sub-result-box">
+                            <h4><i class="fa-solid fa-quote-left"></i> Patient Transcribed Audio</h4>
+                            <div class="transcription-text" id="transcriptionOutput">
+                                Select a sample case or record your voice and upload an image to begin diagnostic evaluation.
+                            </div>
+                        </div>
+
+                        <!-- Diagnostic Impression -->
+                        <div class="sub-result-box highlight-box">
+                            <h4><i class="fa-solid fa-notes-medical"></i> Doctor's Clinical Assessment</h4>
+                            <div class="impression-text" id="doctorAssessmentOutput">
+                                Medical vision analysis will render differential diagnosis, clinical impression, and recommended treatment guidelines here upon submission.
+                            </div>
+                        </div>
+
+                        <!-- Audio Synthesis Player -->
+                        <div class="audio-synthesis-box">
+                            <div class="audio-synth-header">
+                                <span><i class="fa-solid fa-volume-high"></i> Doctor Voice Response</span>
+                                <span class="voice-badge">ElevenLabs Turbo v2</span>
+                            </div>
+                            
+                            <div class="audio-player-custom">
+                                <button class="btn-play-pause" id="playDoctorAudioBtn" disabled>
+                                    <i class="fa-solid fa-play"></i>
+                                </button>
+                                
+                                <div class="audio-waveform-bar">
+                                    <div class="waveform-progress" id="audioProgressFill"></div>
+                                </div>
+                                
+                                <span class="time-display" id="audioTimeDisplay">0:00 / 0:00</span>
+                                
+                                <audio id="doctorAudioElement"></audio>
+                            </div>
+                        </div>
+
+                        <!-- Clinical Disclaimer -->
+                        <div class="medical-disclaimer">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <p><strong>Clinical Disclaimer:</strong> MediVision AI Assistant is designed for educational & triage demonstration. Always consult a board-certified physician for medical emergencies.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MongoDB Atlas Diagnostic History Sidebar -->
+                <div class="card history-card">
+                    <div class="history-header">
+                        <h3><i class="fa-solid fa-clock-rotate-left"></i> Diagnostic History <span class="db-tag">MongoDB Atlas</span></h3>
+                        <button class="btn-text" id="refreshHistoryBtn"><i class="fa-solid fa-rotate-right"></i></button>
+                    </div>
+
+                    <div class="history-list" id="historyList">
+                        <!-- History Items populated dynamically -->
+                        <div class="history-item empty-state">
+                            <i class="fa-solid fa-folder-open"></i>
+                            <p>No previous diagnostic sessions stored yet.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>MediVision AI Assistant v2.0 &bull; Netlify Ready Web Edition &bull; Powered by Groq, ElevenLabs & MongoDB Atlas</p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+</body>
+</html>

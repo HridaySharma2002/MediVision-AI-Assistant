@@ -1,78 +1,135 @@
-🧠🗣️ MediVision AI Assistant
-An interactive AI assistant that simulates a doctor by analyzing patient images and spoken symptoms using cutting-edge language and multimodal models. This project combines computer vision, speech recognition, and large language models for comprehensive medical analysis.
+# MediVision AI Assistant v2.0 - Clinical Vision & Voice Diagnostic Platform
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/yourusername/MediVision-AI-Assistant/actions)
-[![License](https://img.shields.io/badge/license-MIT-blue)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.0.0-orange)](https://github.com/yourusername/MediVision-AI-Assistant/releases)
+[![Netlify Deploy Ready](https://img.shields.io/badge/Netlify-Deployed-00C7B7?logo=netlify&logoColor=white)](https://www.netlify.com)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![MongoDB Atlas](https://img.shields.io/badge/Database-MongoDB%20Atlas-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/cloud/atlas)
+[![Groq Llama-4](https://img.shields.io/badge/AI%20Engine-Groq%20Llama--4%20Vision-f05032)](https://groq.com)
+[![ElevenLabs](https://img.shields.io/badge/Voice%20Synthesis-ElevenLabs-black)](https://elevenlabs.io)
 
-✨ Features
-- **Image Diagnosis**: Upload an image (e.g., a skin condition), and the AI provides a potential diagnosis.
-- **Speech-to-Text**: Describe your symptoms via microphone; they'll be transcribed using Whisper.
-- **AI Doctor Response**: The system processes your speech and image, then returns a diagnosis and recommendations.
-- **Voice Feedback**: The AI doctor replies using realistic speech powered by ElevenLabs or GTTS.
+MediVision AI Assistant v2.0 is a modern, production-ready multimodal clinical diagnostic platform designed to provide rapid medical vision analysis and voice-driven diagnostic assessments. Upgraded from a local Gradio script into a decoupled, web-native architecture ready for frontend deployment on Netlify and backend deployment via Docker / Render.
 
-🧰 Tech Stack
-- **Python 3.11**
-- **Gradio** — for the interactive web UI
-- **GROQ API** — LLM inference (e.g., LLaMA-4)
-- **Whisper** — for speech recognition
-- **ElevenLabs / gTTS** — for AI voice responses
+---
 
-🚀 Getting Started
-1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/yourusername/MediVision-AI-Assistant.git
-   cd MediVision-AI-Assistant
-   ```
-2. **Set Up Environment**
-   **Option A**: Using pipenv (recommended)
-   ```bash
-   pip install pipenv
-   pipenv install
-   pipenv shell
-   ```  
-   **Option B**: Manual setup
-   ```bash
-   pip install -r requirements.txt  # or install packages from Pipfile manually
-   ```
-3. **Environment Variables**
-   Create a .env file and add your keys:
-   ```
-   GROQ_API_KEY=your_groq_api_key
-   ```
-   Optional: If using ElevenLabs, add your ElevenLabs key as needed in voice_of_the_doctor.py.
+## 🏛️ System Architecture
 
-🩺 Usage
-Run the Gradio app:
+```
+                                  +---------------------------------------+
+                                  |     Netlify Web Frontend (v2.0)       |
+                                  |   HTML5 / CSS3 System / Vanilla JS    |
+                                  +-------------------+-------------------+
+                                                      |
+                                           REST API (JSON / FormData)
+                                                      |
+                                                      v
+                                  +-------------------+-------------------+
+                                  |      FastAPI Core REST Server         |
+                                  |       (main.py / Dockerized)          |
+                                  +---------+-----------------+-----------+
+                                            |                 |
+                    +-----------------------+                 +-----------------------+
+                    |                                                                 |
+                    v                                                                 v
++-------------------+-------------------+                         +-------------------+-------------------+
+|       Groq Multimodal Cloud Engine    |                         |        MongoDB Atlas Database     |
+| - Llama-4 Scout 17B (Vision Analysis) |                         | - Clinical Session Logs           |
+| - Whisper Large v3 (Audio STT)        |                         | - Patient History                 |
++---------------------------------------+                         +-----------------------------------+
+                    |
+                    v
++---------------------------------------+
+|  ElevenLabs & gTTS Speech Synthesizer |
+| - High-Fidelity Audio Generation (TTS)|
++---------------------------------------+
+```
+
+---
+
+## 🌟 Key Features
+
+1. **Decoupled Modern Frontend (Netlify Ready)**:
+   - Built with responsive CSS Grid, glassmorphism UI, and dark/light medical themes.
+   - Browser Web Audio API & MediaRecorder integration for live symptom recording with real-time canvas visualizer.
+   - Drag-and-drop clinical image loader with sample case switcher (`acne.jpg`, `dandruff-optimized.webp`, `skin_rash.jpg`).
+   - Client Demo Mode with offline fallback when backend API is disconnected.
+
+2. **FastAPI REST Engine & FFmpeg Pipeline**:
+   - Replaced Gradio with a high-performance FastAPI server (`main.py`).
+   - Handles multi-part file uploads (`image_base64`, `audio` `.mp3`/`.wav`) and returns structured JSON diagnosis + doctor voice audio synthesis.
+
+3. **MongoDB Atlas Integration**:
+   - Stores session diagnostics, symptom transcriptions, and medical recommendations in MongoDB Atlas cluster.
+   - Built-in graceful fallback to local memory if database credentials are not configured.
+
+4. **Production Deployment Ready**:
+   - `netlify.toml` preconfigured with headers, CORS rules, and proxy redirects.
+   - `Dockerfile` packaged with FFmpeg and system audio libraries for Render/Railway/AWS deployment.
+
+---
+
+## 🚀 Quick Start Guide
+
+### 1. Local Development Setup
+
 ```bash
-python gradio_app.py
-```
-This will open a web interface where you can:
-- Speak your symptoms into the mic.
-- Upload an image (e.g., a skin condition).
-- Get an AI-generated medical response as both text and audio.
+# Clone the repository branch
+git clone -b MediVision-AI-Assistant_V2 https://github.com/HridaySharma2002/MediVision-AI-Assistant.git
+cd MediVision-AI-Assistant_V2
 
-📁 Project Structure
-```
-├── brain_of_the_doctor.py      # Image encoder & Groq LLM interface
-├── gradio_app.py               # Gradio-based voice and vision interface
-├── voice_of_the_patient.py     # Handles audio input and transcription
-├── voice_of_the_doctor.py      # Converts text responses to speech
-├── Pipfile                     # Dependency list
-├── .env                        # API keys (not included in repo)
-├── *.mp3, *.jpg                # Sample inputs/outputs
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install requirements
+pip install -r requirements.txt
+
+# Create .env file from template
+cp .env.example .env
+# Edit .env with your GROQ_API_KEY, ELEVENLABS_API_KEY, and MONGODB_URI
 ```
 
-⚠️ Disclaimer
-This application is for educational purposes only. It does not provide real medical advice. Always consult a qualified professional for actual diagnosis or treatment.
+### 2. Launch FastAPI REST Server
 
-📬 Contributing
-Pull requests and feedback are welcome! Open issues for bugs or feature suggestions.
+```bash
+uvicorn main:app --reload --port 8000
+```
+- Access API documentation: `http://localhost:8000/docs`
+- Open `index.html` in browser or serve using Netlify CLI: `npx netlify dev`
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+---
 
-For more information on the technologies used in this project, check out the following links:
-- [Gradio Documentation](https://gradio.app/docs)
-- [GROQ API Documentation](https://groq.dev/docs)
-- [Whisper Speech Recognition](https://openai.com/research/whisper)
-- [ElevenLabs](https://elevenlabs.io/)
+## ☁️ Deployment Instructions
+
+### A. Deploy Frontend on Netlify
+1. Log in to [Netlify](https://app.netlify.com/).
+2. Click **Add new site** > **Import an existing project**.
+3. Select your GitHub repository branch `MediVision-AI-Assistant_V2`.
+4. Set Build Settings:
+   - **Publish directory**: `.` (root directory)
+5. Click **Deploy Site**. Netlify will use `netlify.toml` automatically.
+
+### B. Deploy Backend on Render / Railway (Docker)
+1. Create a new Web Service on [Render](https://render.com/) or [Railway](https://railway.app/).
+2. Connect your GitHub repository branch `MediVision-AI-Assistant_V2`.
+3. Choose **Docker** as the runtime environment.
+4. Set Environment Variables in Render dashboard:
+   - `GROQ_API_KEY`
+   - `ELEVENLABS_API_KEY`
+   - `MONGODB_URI`
+5. Update `netlify.toml` redirect URL with your deployed Render backend URL.
+
+---
+
+## 📡 API Reference
+
+| Endpoint | Method | Description |
+| :--- | :--- | :--- |
+| `/api/health` | `GET` | Health check & service connection status |
+| `/api/analyze` | `POST` | Process image base64 & audio/symptoms text |
+| `/api/history` | `GET` | Retrieve clinical diagnostic history from MongoDB Atlas |
+| `/api/history` | `POST` | Save new diagnostic entry to database |
+
+---
+
+## 🛡️ License & Disclaimer
+
+MediVision AI Assistant is created for educational and medical diagnostic research purposes. Always consult a qualified healthcare provider for clinical medical advice.

@@ -1,92 +1,46 @@
-#MediVision AI Assistant - Voice Synthesis Module
-#Step1a: Setup Text to Speech–TTS–model with gTTS
+# MediVision AI Assistant - Voice Synthesis Module (v2.0 Web Edition)
 import os
+import logging
 from gtts import gTTS
-
-def text_to_speech_with_gtts_old(input_text, output_filepath):
-    language="en"
-
-    audioobj= gTTS(
-        text=input_text,
-        lang=language,
-        slow=False
-    )
-    audioobj.save(output_filepath)
-
-
-input_text="Hi this is Hriday!"
-#text_to_speech_with_gtts_old(input_text=input_text, output_filepath="gtts_testing.mp3")
-
-#Step1b: Setup Text to Speech–TTS–model with ElevenLabs
 import elevenlabs
 from elevenlabs.client import ElevenLabs
 
-ELEVENLABS_API_KEY=os.environ.get("ELEVENLABS_API_KEY")
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("voice_of_the_doctor")
 
-def text_to_speech_with_elevenlabs_old(input_text, output_filepath):
-    client=ElevenLabs(api_key=ELEVENLABS_API_KEY)
-    audio=client.generate(
-        text= input_text,
-        voice= "Aria",
-        output_format= "mp3_22050_32",
-        model= "eleven_turbo_v2"
-    )
-    elevenlabs.save(audio, output_filepath)
+ELEVENLABS_API_KEY = os.environ.get("ELEVENLABS_API_KEY")
 
-#text_to_speech_with_elevenlabs_old(input_text, output_filepath="elevenlabs_testing.mp3") 
-
-#Step2: Use Model for Text output to Voice
-
-import subprocess
-import platform
-
-def text_to_speech_with_gtts(input_text, output_filepath):
-    language="en"
-
-    audioobj= gTTS(
-        text=input_text,
-        lang=language,
-        slow=False
-    )
-    audioobj.save(output_filepath)
-    os_name = platform.system()
+def text_to_speech_with_gtts(input_text: str, output_filepath: str):
+    """Generates MP3 audio file using gTTS (Google Text-to-Speech)."""
     try:
-        if os_name == "Darwin":  # macOS
-            subprocess.run(['afplay', output_filepath])
-        elif os_name == "Windows":  # Windows
-            subprocess.run(['powershell', '-c', f'(New-Object Media.SoundPlayer "{output_filepath}").PlaySync();'])
-        elif os_name == "Linux":  # Linux
-            subprocess.run(['aplay', output_filepath])  # Alternative: use 'mpg123' or 'ffplay'
-        else:
-            raise OSError("Unsupported operating system")
+        audioobj = gTTS(
+            text=input_text,
+            lang="en",
+            slow=False
+        )
+        audioobj.save(output_filepath)
+        return output_filepath
     except Exception as e:
-        print(f"An error occurred while trying to play the audio: {e}")
+        logger.error(f"gTTS error: {e}")
+        return None
 
-
-input_text="Hi this is Hriday, autoplay testing!"
-#text_to_speech_with_gtts(input_text=input_text, output_filepath="gtts_testing_autoplay.mp3")
-
-
-def text_to_speech_with_elevenlabs(input_text, output_filepath):
-    client=ElevenLabs(api_key=ELEVENLABS_API_KEY)
-    audio=client.generate(
-        text= input_text,
-        voice= "Aria",
-        output_format= "mp3_22050_32",
-        model= "eleven_turbo_v2"
-    )
-    elevenlabs.save(audio, output_filepath)
-    os_name = platform.system()
+def text_to_speech_with_elevenlabs(input_text: str, output_filepath: str, api_key: str = None):
+    """Generates high-fidelity MP3 audio file using ElevenLabs API."""
+    key = api_key or os.environ.get("ELEVENLABS_API_KEY")
+    if not key:
+        logger.info("ElevenLabs API Key not found, falling back to gTTS...")
+        return text_to_speech_with_gtts(input_text, output_filepath)
+    
     try:
-        if os_name == "Darwin":  # macOS
-            subprocess.run(['afplay', output_filepath])
-        elif os_name == "Windows":  # Windows
-            subprocess.run(['powershell', '-c', f'(New-Object Media.SoundPlayer "{output_filepath}").PlaySync();'])
-        elif os_name == "Linux":  # Linux
-            subprocess.run(['aplay', output_filepath])  # Alternative: use 'mpg123' or 'ffplay'
-        else:
-            raise OSError("Unsupported operating system")
+        client = ElevenLabs(api_key=key)
+        audio = client.generate(
+            text=input_text,
+            voice="Aria",
+            output_format="mp3_22050_32",
+            model="eleven_turbo_v2"
+        )
+        elevenlabs.save(audio, output_filepath)
+        return output_filepath
     except Exception as e:
-        print(f"An error occurred while trying to play the audio: {e}")
-
-#text_to_speech_with_elevenlabs(input_text, output_filepath="elevenlabs_testing_autoplay.mp3")
+        logger.error(f"ElevenLabs error: {e}. Falling back to gTTS...")
+        return text_to_speech_with_gtts(input_text, output_filepath)
