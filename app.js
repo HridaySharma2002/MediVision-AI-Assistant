@@ -1,6 +1,6 @@
 /**
  * MediVision AI Assistant v2.0 - Frontend Logic & Web Controller
- * Supports REST API backend mode & standalone client demo fallback for Netlify.
+ * Supports REST API backend mode, ElevenLabs TTS, and Native Web Speech Synthesis fallback.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -22,7 +22,8 @@ document.addEventListener('DOMContentLoaded', () => {
         doctorAudioUrl: null,
         history: [],
         autoPlay: true,
-        ttsEngine: 'elevenlabs'
+        ttsEngine: 'elevenlabs',
+        currentUtterance: null
     };
 
     // Preset Sample Cases Data
@@ -186,18 +187,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function checkBackendHealth() {
         if (!state.apiEndpoint) {
-            updateApiStatus(false, 'Demo Mode (Offline)');
+            updateApiStatus(false, 'Browser Demo Mode (Web Speech active)');
             return;
         }
         try {
             const res = await fetch(`${state.apiEndpoint}/api/health`, { method: 'GET' });
             if (res.ok) {
-                updateApiStatus(true, 'API Connected (MongoDB Ready)');
+                updateApiStatus(true, 'FastAPI Connected (MongoDB Atlas Ready)');
             } else {
-                updateApiStatus(false, 'API Server Unavailable (Demo Fallback)');
+                updateApiStatus(false, 'Offline (Web Speech Fallback Active)');
             }
         } catch (err) {
-            updateApiStatus(false, 'Client Demo Mode');
+            updateApiStatus(false, 'Offline (Web Speech Fallback Active)');
         }
     }
 
@@ -228,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
         state.doctorAudioUrl = sample.audioFile;
         doctorAudioElement.src = sample.audioFile;
         playDoctorAudioBtn.disabled = false;
-        audioTimeDisplay.textContent = '0:00 / --:--';
+        audioTimeDisplay.textContent = '0:00 / 0:15';
     }
 
     function fetchImageAsBase64(url) {
@@ -395,12 +396,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        showLoader(true, 'Initializing Groq Multimodal Vision Engine & Whisper Speech Pipeline...');
+        showLoader(true, 'Analyzing lesion morphology and surface patterns...');
 
         try {
-            updateProgress(30, 'Analyzing lesion morphology and surface patterns...');
+            updateProgress(40, 'Generating differential clinical assessment...');
 
-            // If REST API endpoint is active, call backend
             let responseData = null;
             if (state.apiEndpoint) {
                 try {
@@ -420,12 +420,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         responseData = await res.json();
                     }
                 } catch (e) {
-                    console.warn('Backend REST API unreachable, running Netlify Client Synthesis Mode');
+                    console.warn('Backend REST API offline. Using Web Speech Synthesis fallback.');
                 }
             }
 
-            updateProgress(70, 'Generating differential diagnosis and voice synthesis...');
-            await new Promise(r => setTimeout(r, 600));
+            updateProgress(80, 'Preparing voice output and medical recommendations...');
+            await new Promise(r => setTimeout(r, 400));
 
             // Fallback / Client Demo Mode if API returned no data
             if (!responseData) {
@@ -437,8 +437,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
             }
 
-            updateProgress(100, 'Complete!');
-            await new Promise(r => setTimeout(r, 300));
+            updateProgress(100, 'Analysis Complete!');
+            await new Promise(r => setTimeout(r, 200));
 
             // Render Output
             transcriptionOutput.textContent = responseData.transcription;
@@ -452,7 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 playDoctorAudio();
             }
 
-            // Save to MongoDB Atlas / History
+            // Save to Local History
             saveHistoryEntry({
                 date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 symptoms: symptomsText || responseData.transcription,
@@ -483,8 +483,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (text) loaderStatusText.textContent = text;
     }
 
-    // --- Audio Playback ---
+    // --- Audio Playback with Web Speech API Fallback ---
     function toggleDoctorAudioPlay() {
+        if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
+            window.speechSynthesis.cancel();
+            playDoctorAudioBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+            return;
+        }
+
         if (doctorAudioElement.paused) {
             playDoctorAudio();
         } else {
@@ -494,14 +500,52 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function playDoctorAudio() {
+        // Try playing MP3 audio file first
         doctorAudioElement.play()
             .then(() => {
                 playDoctorAudioBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
             })
             .catch(err => {
-                console.warn('Autoplay prevented or missing audio file:', err);
-                playDoctorAudioBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+                console.warn('MP3 playback fallback to browser Web Speech API:', err);
+                speakWithBrowserSpeechSynthesis(doctorAssessmentOutput.textContent);
             });
+    }
+
+    function speakWithBrowserSpeechSynthesis(text) {
+        if (!('speechSynthesis' in window)) {
+            alert('Your browser does not support audio synthesis.');
+            return;
+        }
+
+        window.speechSynthesis.cancel(); // Stop any active speech
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.95;
+        utterance.pitch = 1.0;
+        utterance.lang = 'en-US';
+
+        const voices = window.speechSynthesis.getVoices();
+        const preferredVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Samantha')));
+        if (preferredVoice) utterance.voice = preferredVoice;
+
+        utterance.onstart = () => {
+            playDoctorAudioBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+            audioTimeDisplay.textContent = 'Speaking...';
+            audioProgressFill.style.width = '50%';
+        };
+
+        utterance.onend = () => {
+            playDoctorAudioBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+            audioTimeDisplay.textContent = '0:00 / 0:15';
+            audioProgressFill.style.width = '100%';
+        };
+
+        utterance.onerror = () => {
+            playDoctorAudioBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+        };
+
+        state.currentUtterance = utterance;
+        window.speechSynthesis.speak(utterance);
     }
 
     function updateAudioProgress() {
@@ -523,7 +567,6 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('medivision_history', JSON.stringify(state.history));
         renderHistory();
 
-        // Send to MongoDB Atlas API if server available
         if (state.apiEndpoint) {
             fetch(`${state.apiEndpoint}/api/history`, {
                 method: 'POST',
