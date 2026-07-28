@@ -103,13 +103,14 @@
                         <h2>Sample Clinical Cases</h2>
                     </div>
                     <div class="sample-cards">
-                        <button class="sample-card active" data-sample="acne">
+                        <button class="sample-card" data-sample="acne">
                             <img src="acne.jpg" alt="Acne Case">
                             <div class="sample-meta">
                                 <h3>Facial Dermatosis</h3>
                                 <span>Acne Vulneris</span>
                             </div>
                         </button>
+
 
                         <button class="sample-card" data-sample="dandruff">
                             <img src="dandruff-optimized.webp" alt="Scalp Case">
@@ -138,18 +139,37 @@
                             <span class="step-num">01</span>
                             <div class="card-title">
                                 <h3>Medical Image Input</h3>
-                                <p>Upload high-resolution lesion or clinical photo</p>
+                                <p>Upload file or capture direct clinical photo via webcam</p>
                             </div>
                         </div>
 
                         <div class="dropzone" id="imageDropzone">
-                            <input type="file" id="imageFileInput" accept="image/*" class="file-input">
+                            <input type="file" id="imageFileInput" accept="image/*" capture="environment" class="file-input">
                             <div class="dropzone-content" id="dropzoneContent">
                                 <div class="upload-icon">
                                     <i class="fa-solid fa-cloud-arrow-up"></i>
                                 </div>
                                 <p class="dropzone-text">Drag & drop lesion image here or <span>browse files</span></p>
                                 <span class="file-limits">Supports JPG, PNG, WEBP (Max 10MB)</span>
+                                
+                                <div class="camera-trigger-wrap">
+                                    <button type="button" class="btn-camera-trigger" id="openCameraBtn">
+                                        <i class="fa-solid fa-camera"></i> Open Camera
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Live Camera Viewfinder -->
+                            <div class="webcam-container hidden" id="webcamContainer">
+                                <video id="webcamFeed" autoplay playsinline muted></video>
+                                <div class="webcam-controls">
+                                    <button type="button" class="btn-snap" id="snapPhotoBtn">
+                                        <i class="fa-solid fa-circle-dot"></i> Capture Snapshot
+                                    </button>
+                                    <button type="button" class="btn-cancel-cam" id="closeCameraBtn">
+                                        <i class="fa-solid fa-xmark"></i> Cancel
+                                    </button>
+                                </div>
                             </div>
 
                             <div class="image-preview-container hidden" id="previewContainer">
@@ -161,6 +181,7 @@
                             </div>
                         </div>
                     </div>
+
 
                     <!-- Voice Recorder Card -->
                     <div class="input-card voice-card">

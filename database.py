@@ -7,11 +7,13 @@ import os
 import logging
 from datetime import datetime
 from typing import List, Dict, Any, Optional
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("medivision_db")
 
-MONGODB_URI = os.environ.get("MONGODB_URI")
 DB_NAME = os.environ.get("MONGODB_DB_NAME", "medivision_db")
 COLLECTION_NAME = "diagnostic_history"
 
@@ -21,10 +23,11 @@ in_memory_history: List[Dict[str, Any]] = []
 
 def init_db():
     global db_client, diagnostic_collection
-    if MONGODB_URI:
+    mongodb_uri = os.environ.get("MONGODB_URI")
+    if mongodb_uri and not mongodb_uri.startswith("your_"):
         try:
             from pymongo import MongoClient
-            db_client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=3000)
+            db_client = MongoClient(mongodb_uri, serverSelectionTimeoutMS=3000)
             # Test connection
             db_client.admin.command('ping')
             db = db_client[DB_NAME]
@@ -37,7 +40,7 @@ def init_db():
             diagnostic_collection = None
             return False
     else:
-        logger.info("MONGODB_URI not provided. Running with in-memory storage fallback.")
+        logger.info("MONGODB_URI not provided or is placeholder. Running with in-memory storage fallback.")
         return False
 
 def save_diagnostic_record(record: Dict[str, Any]) -> Dict[str, Any]:

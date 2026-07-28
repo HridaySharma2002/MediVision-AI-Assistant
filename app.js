@@ -6,8 +6,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- State Management ---
     const state = {
-        apiEndpoint: 'http://localhost:8000',
-        currentSample: 'acne',
+        apiEndpoint: window.location.origin.startsWith('http') ? window.location.origin : 'http://127.0.0.1:8000',
+        currentSample: null,
         selectedImageFile: null,
         selectedImageBase64: null,
         recordedAudioBlob: null,
@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ttsEngine: 'elevenlabs',
         currentUtterance: null
     };
+
 
     // Preset Sample Cases Data
     const sampleCases = {
@@ -71,6 +72,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const imagePreview = document.getElementById('imagePreview');
     const removeImageBtn = document.getElementById('removeImageBtn');
 
+    // Camera DOM Elements
+    const openCameraBtn = document.getElementById('openCameraBtn');
+    const webcamContainer = document.getElementById('webcamContainer');
+    const webcamFeed = document.getElementById('webcamFeed');
+    const snapPhotoBtn = document.getElementById('snapPhotoBtn');
+    const closeCameraBtn = document.getElementById('closeCameraBtn');
+
     const recordBtn = document.getElementById('recordBtn');
     const recordHint = document.getElementById('recordHint');
     const recTimer = document.getElementById('recTimer');
@@ -99,7 +107,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Initialization ---
     initTheme();
-    loadSampleCase('acne');
     checkBackendHealth();
     loadHistory();
     setupCanvas();
@@ -110,6 +117,13 @@ document.addEventListener('DOMContentLoaded', () => {
     closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
     saveSettingsBtn.addEventListener('click', saveSettings);
 
+    symptomsTextInput.addEventListener('input', () => {
+        if (state.currentSample) {
+            state.currentSample = null;
+            sampleCards.forEach(c => c.classList.remove('active'));
+        }
+    });
+
     sampleCards.forEach(card => {
         card.addEventListener('click', () => {
             sampleCards.forEach(c => c.classList.remove('active'));
@@ -118,6 +132,17 @@ document.addEventListener('DOMContentLoaded', () => {
             loadSampleCase(sampleKey);
         });
     });
+
+
+    // Image Upload & Camera Handlers
+    openCameraBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        startCamera();
+    });
+
+    snapPhotoBtn.addEventListener('click', captureSnapshot);
+    closeCameraBtn.addEventListener('click', stopCamera);
+
 
     // Image Upload Handlers
     imageDropzone.addEventListener('dragover', (e) => {
@@ -250,6 +275,8 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Please select a valid medical image file.');
             return;
         }
+        state.currentSample = null;
+        sampleCards.forEach(c => c.classList.remove('active'));
         state.selectedImageFile = file;
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -262,6 +289,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function clearSelectedImage() {
+        stopCamera();
+        state.currentSample = null;
+        sampleCards.forEach(c => c.classList.remove('active'));
         state.selectedImageFile = null;
         state.selectedImageBase64 = null;
         imagePreview.src = '';
@@ -269,6 +299,63 @@ document.addEventListener('DOMContentLoaded', () => {
         dropzoneContent.classList.remove('hidden');
         imageFileInput.value = '';
     }
+
+    // --- Live Camera Functions ---
+    async function startCamera() {
+        try {
+            const constraints = {
+                video: {
+                    facingMode: 'user',
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                }
+            };
+            state.webcamStream = await navigator.mediaDevices.getUserMedia(constraints);
+            webcamFeed.srcObject = state.webcamStream;
+            webcamContainer.classList.remove('hidden');
+            dropzoneContent.classList.add('hidden');
+            previewContainer.classList.add('hidden');
+        } catch (err) {
+            alert('Unable to access camera: ' + (err.message || 'Permission denied or no camera device available'));
+            console.error('Webcam error:', err);
+        }
+    }
+
+    function stopCamera() {
+        if (state.webcamStream) {
+            state.webcamStream.getTracks().forEach(track => track.stop());
+            state.webcamStream = null;
+        }
+        webcamFeed.srcObject = null;
+        webcamContainer.classList.add('hidden');
+        if (!state.selectedImageBase64) {
+            dropzoneContent.classList.remove('hidden');
+        }
+    }
+
+    function captureSnapshot() {
+        if (!webcamFeed.srcObject) return;
+
+        const offscreenCanvas = document.createElement('canvas');
+        offscreenCanvas.width = webcamFeed.videoWidth || 640;
+        offscreenCanvas.height = webcamFeed.videoHeight || 480;
+
+        const ctx = offscreenCanvas.getContext('2d');
+        ctx.drawImage(webcamFeed, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
+
+        const dataUrl = offscreenCanvas.toDataURL('image/jpeg', 0.9);
+        state.currentSample = null;
+        sampleCards.forEach(c => c.classList.remove('active'));
+        state.selectedImageBase64 = dataUrl.split(',')[1];
+        state.selectedImageFile = null;
+
+        imagePreview.src = dataUrl;
+        stopCamera();
+        previewContainer.classList.remove('hidden');
+        dropzoneContent.classList.add('hidden');
+    }
+
+
 
     // --- Audio Visualizer & Recording ---
     function setupCanvas() {
@@ -418,17 +505,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (res.ok) {
                         responseData = await res.json();
+                    } else {
+                        const errData = await res.json().catch(() => ({ detail: res.statusText }));
+                        throw new Error(errData.detail || 'Analysis API call failed');
                     }
                 } catch (e) {
-                    console.warn('Backend REST API offline. Using Web Speech Synthesis fallback.');
+                    console.warn('Backend REST API Error:', e);
+                    if (!state.currentSample) {
+                        alert('API Analysis Error: ' + e.message + '\nMake sure FastAPI backend is running at ' + state.apiEndpoint);
+                        return;
+                    }
                 }
             }
 
             updateProgress(80, 'Preparing voice output and medical recommendations...');
             await new Promise(r => setTimeout(r, 400));
 
-            // Fallback / Client Demo Mode if API returned no data
-            if (!responseData) {
+            // Fallback ONLY if active sample is selected and API returned no data
+            if (!responseData && state.currentSample) {
                 const sample = sampleCases[state.currentSample] || sampleCases.acne;
                 responseData = {
                     transcription: state.recordedAudioBlob ? 'Transcribed symptom audio: ' + symptomsText : symptomsText || sample.transcription,
@@ -436,6 +530,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     audio_url: sample.audioFile
                 };
             }
+
 
             updateProgress(100, 'Analysis Complete!');
             await new Promise(r => setTimeout(r, 200));

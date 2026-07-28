@@ -22,13 +22,21 @@ from database import init_db, save_diagnostic_record, get_diagnostic_history
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("medivision_api")
 
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+
 app = FastAPI(
     title="MediVision AI Assistant REST API",
     description="Multimodal Clinical Diagnostic API with Groq, ElevenLabs, and MongoDB Atlas",
-    version="2.0.0"
+    version="2.0.0",
+    lifespan=lifespan
 )
 
-# Enable CORS for Netlify frontend
+# Enable CORS for Netlify and Web Frontends
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -37,10 +45,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize Database
-@app.on_event("startup")
-def startup_event():
-    init_db()
+
 
 # Serve static assets (images, audio)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -53,7 +58,10 @@ class DiagnosticRequest(BaseModel):
 class HistoryEntry(BaseModel):
     symptoms: Optional[str] = ""
     transcription: Optional[str] = ""
-    doctor_response: str
+    doctor_response: Optional[str] = ""
+    assessment: Optional[str] = ""
+    date: Optional[str] = ""
+
 
 @app.get("/api/health")
 def health_check():

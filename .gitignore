@@ -1,0 +1,35 @@
+# Environment files (CRITICAL: NEVER PUSH API KEYS TO GITHUB)
+.env
+*.env
+.env.local
+.env.*.local
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Audio outputs / temporary generated media
+final.mp3
+test_voice.mp3
+*.mp3
+
+
+# Gradio / IDE / OS metadata
+.gradio/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Large archives
+*.7z
+*.tgz
+*.zip
